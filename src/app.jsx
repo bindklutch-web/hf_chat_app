@@ -7,9 +7,7 @@ export default function App() {
   const [streaming, setStreaming] = useState(false);
   const bottomRef = useRef(null);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  useEffect(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), [messages]);
 
   async function send() {
     if (!input.trim() || streaming) return;
@@ -20,39 +18,34 @@ export default function App() {
     setInput("");
     setStreaming(true);
 
-    try {
-      const res = await fetch("https://probable-cod-jjxr46pj5w97cg95-8000.app.github.dev/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: history }),
-      });
+    const res = await fetch("https://probable-cod-jjxr46pj5w97cg95-8000.app.github.dev/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: history }),
+    });
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let assistantText = "";
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let assistantText = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value);
-        for (const line of chunk.split("\n")) {
-          if (!line.startsWith("data: ")) continue;
-          try {
-            const json = JSON.parse(line.slice(6));
-            const delta = json.choices?.[0]?.delta?.content || "";
-            assistantText += delta;
-            setMessages(prev => [
-              ...prev.slice(0, -1),
-              { role: "assistant", content: assistantText }
-            ]);
-          } catch (e) {}
-        }
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value);
+      for (const line of chunk.split("\n")) {
+        if (!line.startsWith("data: ")) continue;
+        try {
+          const json = JSON.parse(line.slice(6));
+          const delta = json.choices?.[0]?.delta?.content || "";
+          assistantText += delta;
+          setMessages(prev => [
+            ...prev.slice(0, -1),
+            { role: "assistant", content: assistantText }
+          ]);
+        } catch {}
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setStreaming(false);
     }
+    setStreaming(false);
   }
 
   return (
