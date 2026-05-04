@@ -17,7 +17,7 @@ export default function App() {
     setInput("");
     setStreaming(true);
 
-    const res = await fetch("http://localhost:8000/chat", {
+    const res = await fetch("https://probable-cod-jjxr46pj5w97cg95-8000.app.github.dev/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messages: history }),
