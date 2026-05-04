@@ -1,5 +1,5 @@
 cat > /workspaces/hf_chat_app/frontend/src/App.jsx << 'EOF'
-import React, { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect } from "react";
 
 export default function App() {
   const [messages, setMessages] = useState([]);
