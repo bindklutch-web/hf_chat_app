@@ -7,7 +7,9 @@ export default function App() {
   const [streaming, setStreaming] = useState(false);
   const bottomRef = useRef(null);
 
-  useEffect(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), [messages]);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   async function send() {
     if (!input.trim() || streaming) return;
@@ -18,34 +20,45 @@ export default function App() {
     setInput("");
     setStreaming(true);
 
-    const res = await fetch("https://probable-cod-jjxr46pj5w97cg95-8000.app.github.dev/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: history }),
-    });
+    try {
+      const res = await fetch("https://probable-cod-jjxr46pj5w97cg95-8000.app.github.dev/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history }),
+      });
 
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let assistantText = "";
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let assistantText = "";
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value);
-      for (const line of chunk.split("\n")) {
-        if (!line.startsWith("data: ")) continue;
-        try {
-          const json = JSON.parse(line.slice(6));
-          const delta = json.choices?.[0]?.delta?.content || "";
-          assistantText += delta;
-          setMessages(prev => [
-            ...prev.slice(0, -1),
-            { role: "assistant", content: assistantText }
-          ]);
-        } catch {}
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n");
+        
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const json = JSON.parse(line.slice(6));
+            const delta = json.choices?.[0]?.delta?.content || "";
+            assistantText += delta;
+            
+            setMessages(prev => [
+              ...prev.slice(0, -1),
+              { role: "assistant", content: assistantText }
+            ]);
+          } catch (e) {
+            // Ignore parse errors for partial chunks
+          }
+        }
       }
+    } catch (error) {
+      console.error("Chat error:", error);
+    } finally {
+      setStreaming(false);
     }
-    setStreaming(false);
   }
 
   return (
@@ -59,7 +72,7 @@ export default function App() {
               background: m.role === "user" ? "#0070f3" : "#f0f0f0",
               color: m.role === "user" ? "#fff" : "#000", maxWidth: "80%"
             }}>
-              {m.content || "▋"}
+              {m.content || (streaming && i === messages.length - 1 ? "▋" : "")}
             </span>
           </div>
         ))}
@@ -74,7 +87,7 @@ export default function App() {
           style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", fontSize: 15 }}
         />
         <button onClick={send} disabled={streaming}
-          style={{ padding: "10px 20px", background: "#0070f3", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}>
+          style={{ padding: "10px 20px", background: "#0070f3", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", opacity: streaming ? 0.7 : 1 }}>
           {streaming ? "..." : "Send"}
         </button>
       </div>
