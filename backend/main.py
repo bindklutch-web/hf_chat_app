@@ -36,3 +36,7 @@ async def chat(req: ChatRequest):
                         yield {"data": line[6:]}  # strip "data: " prefix
 
     return EventSourceResponse(stream())
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
