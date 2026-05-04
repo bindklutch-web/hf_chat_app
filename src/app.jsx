@@ -1,5 +1,5 @@
 cat > /workspaces/hf_chat_app/frontend/src/App.jsx << 'EOF'
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react"
 
 export default function App() {
   const [messages, setMessages] = useState([]);
@@ -34,28 +34,22 @@ export default function App() {
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
         const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
-        
-        for (const line of lines) {
+        for (const line of chunk.split("\n")) {
           if (!line.startsWith("data: ")) continue;
           try {
             const json = JSON.parse(line.slice(6));
             const delta = json.choices?.[0]?.delta?.content || "";
             assistantText += delta;
-            
             setMessages(prev => [
               ...prev.slice(0, -1),
               { role: "assistant", content: assistantText }
             ]);
-          } catch (e) {
-            // Ignore parse errors for partial chunks
-          }
+          } catch (e) {}
         }
       }
-    } catch (error) {
-      console.error("Chat error:", error);
+    } catch (err) {
+      console.error(err);
     } finally {
       setStreaming(false);
     }
@@ -72,7 +66,7 @@ export default function App() {
               background: m.role === "user" ? "#0070f3" : "#f0f0f0",
               color: m.role === "user" ? "#fff" : "#000", maxWidth: "80%"
             }}>
-              {m.content || (streaming && i === messages.length - 1 ? "▋" : "")}
+              {m.content || "▋"}
             </span>
           </div>
         ))}
@@ -87,7 +81,7 @@ export default function App() {
           style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", fontSize: 15 }}
         />
         <button onClick={send} disabled={streaming}
-          style={{ padding: "10px 20px", background: "#0070f3", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer", opacity: streaming ? 0.7 : 1 }}>
+          style={{ padding: "10px 20px", background: "#0070f3", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}>
           {streaming ? "..." : "Send"}
         </button>
       </div>
